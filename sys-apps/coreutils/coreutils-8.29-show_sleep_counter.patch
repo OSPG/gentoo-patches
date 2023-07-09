@@ -1,0 +1,46 @@
+diff --git a/src/sleep.c b/src/sleep.c
+index 889719f..c0c212d 100644
+--- a/src/sleep.c
++++ b/src/sleep.c
+@@ -60,6 +60,7 @@ specified by the sum of their values.\n\
+               program_name, program_name);
+       fputs (HELP_OPTION_DESCRIPTION, stdout);
+       fputs (VERSION_OPTION_DESCRIPTION, stdout);
++      fputs (_("      -c         Show counter"), stdout);
+       emit_ancillary_info (PROGRAM_NAME);
+     }
+   exit (status);
+@@ -104,8 +105,18 @@ int
+ main (int argc, char **argv)
+ {
+   double seconds = 0.0;
++  bool show_counter = false;
+   bool ok = true;
+ 
++  if (strlen(argv[1]) == 2 && argv[1][1] == 'c') {
++    show_counter = true; 
++
++    // I didn't want to mess with how coreutils handle those arguments
++    // so I simply delete my custom arg
++    argv[1] = argv[2];
++    argc = 2;
++  }
++
+   initialize_main (&argc, &argv);
+   set_program_name (argv[0]);
+   setlocale (LC_ALL, "");
+@@ -147,7 +158,13 @@ main (int argc, char **argv)
+   if (!ok)
+     usage (EXIT_FAILURE);
+ 
+-  if (xnanosleep (seconds))
++  if (show_counter) {
++  	for(double s = seconds; s > 0; s--) {
++  		printf("%d\n", (int)s);
++  		if (xnanosleep (1))
++    		die (EXIT_FAILURE, errno, _("cannot read realtime clock"));
++	   }
++  } else if (xnanosleep (seconds))
+     die (EXIT_FAILURE, errno, _("cannot read realtime clock"));
+ 
+   return EXIT_SUCCESS;
